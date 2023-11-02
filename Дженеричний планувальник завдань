@@ -1,0 +1,76 @@
+using System;
+using System.Collections.Generic;
+
+public class TaskScheduler<TTask, TPriority>
+{
+    private SortedDictionary<TPriority, Queue<TTask>> taskQueue = new SortedDictionary<TPriority, Queue<TTask>>();
+    private Func<TTask> taskInitializer;
+    private Action<TTask> taskResetter;
+
+    public TaskScheduler(Func<TTask> initializer, Action<TTask> resetter)
+    {
+        taskInitializer = initializer;
+        taskResetter = resetter;
+    }
+
+    public void AddTask(TTask task, TPriority priority)
+    {
+        if (!taskQueue.ContainsKey(priority))
+        {
+            taskQueue[priority] = new Queue<TTask>();
+        }
+
+        taskQueue[priority].Enqueue(task);
+    }
+
+    public void ExecuteNext(TaskExecution<TTask> execution)
+    {
+        if (taskQueue.Count == 0)
+        {
+            Console.WriteLine("No tasks to execute.");
+            return;
+        }
+
+        TTask taskToExecute = taskQueue[taskQueue.Keys.Max()].Dequeue();
+        execution(taskToExecute);
+        taskResetter(taskToExecute);
+    }
+
+    public TTask GetTaskFromPool()
+    {
+        return taskInitializer();
+    }
+
+    public void ReturnTaskToPool(TTask task, TPriority priority)
+    {
+        AddTask(task, priority);
+    }
+
+    public delegate void TaskExecution(TTask task);
+}
+
+class Program
+{
+    static void Main()
+    {
+        TaskScheduler<string, int> scheduler = new TaskScheduler<string, int>(
+            initializer: () => string.Empty,
+            resetter: task => Console.WriteLine("Resetting task: " + task)
+        );
+
+        scheduler.AddTask("Task 1", 2);
+        scheduler.AddTask("Task 2", 1);
+        scheduler.AddTask("Task 3", 3);
+
+    
+        Console.WriteLine("Executing tasks:");
+        scheduler.ExecuteNext(task => Console.WriteLine("Executing task: " + task));
+
+     
+        string returnedTask = "Returned Task";
+        scheduler.ReturnTaskToPool(returnedTask, 1);
+
+        Console.WriteLine("Executing tasks after returning a task:");
+        scheduler.ExecuteNext(task => Console.WriteLine("Executing task: " + task));
+    }
+}
