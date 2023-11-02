@@ -1,0 +1,51 @@
+using System;
+using System.Collections.Generic;
+
+public class Repository<T>
+{
+    private List<T> items = new List<T>();
+
+    public void Add(T item)
+    {
+        items.Add(item);
+    }
+
+    public List<T> Find(Criteria<T> criteria)
+    {
+        List<T> result = new List<T>();
+
+        foreach (T item in items)
+        {
+            if (criteria(item))
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+}
+
+public delegate bool Criteria<T>(T item);
+
+class Program
+{
+    static void Main()
+    {
+        Repository<string> stringRepository = new Repository<string>();
+        stringRepository.Add("Apple");
+        stringRepository.Add("Banana");
+        stringRepository.Add("Cherry");
+        stringRepository.Add("Date");
+
+        Criteria<string> startsWithC = item => item.StartsWith("C");
+
+        List<string> result = stringRepository.Find(startsWithC);
+
+        Console.WriteLine("Елементи, які починаються з 'C':");
+        foreach (string item in result)
+        {
+            Console.WriteLine(item);
+        }
+    }
+}
