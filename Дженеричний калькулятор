@@ -1,0 +1,38 @@
+using System;
+
+public class Calculator<T>
+{
+    public Func<T, T, T> Add { get; }
+    public Func<T, T, T> Subtract { get; }
+    public Func<T, T, T> Multiply { get; }
+    public Func<T, T, T> Divide { get; }
+
+    public Calculator(Func<T, T, T> add, Func<T, T, T> subtract, Func<T, T, T> multiply, Func<T, T, T> divide)
+    {
+        Add = add;
+        Subtract = subtract;
+        Multiply = multiply;
+        Divide = divide;
+    }
+
+    public T PerformOperation(T a, T b, Func<T, T, T> operation)
+    {
+        return operation(a, b);
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        // Створення класу Calculator для цілих чисел
+        Calculator<int> intCalculator = new Calculator<int>((x, y) => x + y, (x, y) => x - y, (x, y) => x * y, (x, y) => x / y);
+        int result = intCalculator.PerformOperation(10, 5, intCalculator.Add);
+        Console.WriteLine("Результат додавання: " + result);
+
+        // Створення класу Calculator для чисел з плаваючою комою
+        Calculator<double> doubleCalculator = new Calculator<double>((x, y) => x + y, (x, y) => x - y, (x, y) => x * y, (x, y) => x / y);
+        double doubleResult = doubleCalculator.PerformOperation(10.5, 5.2, doubleCalculator.Multiply);
+        Console.WriteLine("Результат множення: " + doubleResult);
+    }
+}
