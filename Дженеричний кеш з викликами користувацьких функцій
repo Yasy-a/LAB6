@@ -1,0 +1,75 @@
+using System;
+using System.Collections.Generic;
+
+public class FunctionCache<TKey, TResult>
+{
+    private Dictionary<TKey, CacheItem> cache = new Dictionary<TKey, CacheItem>();
+    private TimeSpan cacheDuration;
+
+    public FunctionCache(TimeSpan cacheDuration)
+    {
+        this.cacheDuration = cacheDuration;
+    }
+
+    public TResult GetOrAdd(TKey key, Func<TKey, TResult> function)
+    {
+        if (cache.ContainsKey(key))
+        {
+            var item = cache[key];
+            if (DateTime.Now - item.Timestamp <= cacheDuration)
+            {
+                return item.Result;
+            }
+            else
+            {
+                cache.Remove(key);
+            }
+        }
+
+        TResult result = function(key);
+        cache[key] = new CacheItem(result, DateTime.Now);
+        return result;
+    }
+
+    private class CacheItem
+    {
+        public TResult Result { get; }
+        public DateTime Timestamp { get; }
+
+        public CacheItem(TResult result, DateTime timestamp)
+        {
+            Result = result;
+            Timestamp = timestamp;
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        FunctionCache<string, int> cache = new FunctionCache<string, int>(TimeSpan.FromSeconds(5));
+
+       
+        Func<string, int> expensiveFunction = key =>
+        {
+            Console.WriteLine("Calculating result for " + key);
+            return key.Length;
+        };
+
+        string input1 = "Hello";
+        string input2 = "World";
+
+        int result1 = cache.GetOrAdd(input1, expensiveFunction);
+        int result2 = cache.GetOrAdd(input2, expensiveFunction);
+
+        Console.WriteLine("Result 1: " + result1);
+        Console.WriteLine("Result 2: " + result2);
+
+     
+        System.Threading.Thread.Sleep(6000);
+
+        int result3 = cache.GetOrAdd(input1, expensiveFunction);
+        Console.WriteLine("Result 3: " + result3);
+    }
+}
